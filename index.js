@@ -1,10 +1,19 @@
+
 // Router from documentation
 import Router from "./router"
+
+import { githubSVG, linkedinSVG, htmlSVG } from "./resources.js"
 
 const userLinks = [
 	{ "name": "My Website", "url": "https://killiandebacker.com/" },
 	{ "name": "Linkedin", "url": "https://www.linkedin.com/in/killian-debacker-95a813165/" },
 	{ "name": "GitHub", "url": "https://github.com/Killian264" },
+]
+
+const socialLinks = [
+	{ "url": "https://killiandebacker.com/", svg: htmlSVG },
+	{ "url": "https://www.linkedin.com/in/killian-debacker-95a813165/", svg: linkedinSVG },
+	{ "url": "https://github.com/Killian264", svg: githubSVG },
 ]
 
 let htmlUrl = "https://static-links-page.signalnerve.workers.dev"
@@ -41,6 +50,7 @@ async function retrieveHtml(request){
 	// I think I prefer writing it inline rather than making a new class elsewhere, I do both here
 	const response = rewriter
 		.on("div#links", new LinksTransformer(userLinks))
+		.on("div#social", new SocialLinkTransformer(socialLinks))
 		.on("div#profile", {
 			element(element){
 				element.removeAttribute("style")
@@ -55,12 +65,26 @@ async function retrieveHtml(request){
 		})
 		.on("h1#name", {
 			element(element){
-				element.setInnerContent("Killian Debacker");
+				element.setInnerContent("Killian Debacker")
+			}
+		})
+		.on("title", {
+			element(element){
+				element.setInnerContent("Killian Debacker")
+			}
+		})
+		.on("body", {
+			element(element){
+				const classAttribute = element.getAttribute("class")
+				const updatedAttribute = classAttribute.replace("bg-gray-900", "") + ' bg-blue-500'
+				element.setAttribute("class", updatedAttribute)
 			}
 		})
 		.transform(html)
 	return response
 }
+
+
 
 
 // request html from signalnerve
@@ -92,9 +116,26 @@ class LinksTransformer {
 	}
 	
 	async element(element) {
-		let linkHtml = this.links.map(link => {
+		const linkHtml = this.links.map(link => {
 			return `<a target="_blank" href="${link.url}">${link.name}</a>`
 		})
+		element.setInnerContent(linkHtml, {html: true});
+	}
+}
+
+// Transform social links
+class SocialLinkTransformer {
+	constructor(links) {
+	  this.links = links
+	}
+	
+	async element(element) {
+		element.removeAttribute("style")
+
+		const linkHtml = this.links.map(link => {
+			return `<a target="_blank" href="${link.url}">${link.svg}</a>`
+		})
+		
 		element.setInnerContent(linkHtml, {html: true});
 	}
 }
